@@ -15,7 +15,7 @@
                   <i class="overlay-icon-spacing fa-solid fa-thumbs-up"></i>
                 </div>
                 <div class="right-side-overlay">
-                  <i class="fa-solid fa-circle-chevron-down"></i>
+                  <i @click="openContentModal" class="fa-solid fa-circle-chevron-down"></i>
                 </div>
               </div>
               <div class="overlay-details">
@@ -25,13 +25,14 @@
                 <div v-if="contentDetails.number_of_episodes" class="content-detail-spacing">
                   {{ contentDetails.number_of_episodes }} Episodes
                 </div>
+                <div v-if="contentDetails.runtime">
+                  {{ getReadableRuntime(contentDetails.runtime) }}
+                </div>
               </div>
-              <div class="overlay-details">
-                <div v-if="contentDetails.genres">
-                  <div v-for="genre, index in contentDetails.genres" :key="index">
-                    {{ genre }}
-                    <i v-if="index !== contentDetails.genres.length - 1" class="genre-seperator fa-solid fa-circle"></i>
-                  </div>
+              <div v-if="contentDetails.genres" class="overlay-details">
+                <div v-for="genre, index in contentDetails.genres" :key="index" class="genre-list">
+                  {{ genre }}
+                  <i v-if="index !== contentDetails.genres.length - 1" class="genre-seperator fa-solid fa-circle"></i>
                 </div>
               </div>
             </div>
@@ -40,14 +41,20 @@
       </div>
       <i @click="increaseContentGroupIndex" class="scroll-right fa-solid fa-chevron-right" :id="`scroll-right-${category.id}`"></i>
     </div>
+    <ContentModal @content-modal-closed="closeContentModal" v-if="showContentModal" :contentDetails="contentDetails" />
   </div>
 </template>
 
 <script>
+import ContentModal from './ContentModal.vue';
+
 export default {
   name: 'VideoCarousel',
   props: {
     category: Object
+  },
+  components: {
+    ContentModal
   },
   data() {
     return {
@@ -56,6 +63,7 @@ export default {
       contentGroupIndex: 0,
       contentDetails: {},
       imgBaseUrl: 'https://www.themoviedb.org/t/p/w440_and_h660_face/',
+      showContentModal: null
     }
   },  
   methods: {
@@ -74,7 +82,6 @@ export default {
         const response = await fetch(`https://api.themoviedb.org/3/${this.category.searchQuery}/${contentId}?api_key=177095cacff5e15a4fcc830553cfd31b&language=en-US&page=1`);
 
         const responseJson = await response.json();
-        console.log(responseJson)
         return responseJson;
       } catch(err) {
         console.log(err);
@@ -85,7 +92,6 @@ export default {
         const response = await fetch(`https://api.themoviedb.org/3/${this.category.searchQuery}/${contentId}/content_ratings?api_key=177095cacff5e15a4fcc830553cfd31b&language=en-US&page=1`);
         
         const responseJson = await response.json();
-        console.log(responseJson)
         const ratingUS = responseJson.results.find(res => res.iso_3166_1 === 'US').rating;
         return ratingUS;
       } catch(err) {
@@ -145,6 +151,28 @@ export default {
       const contentElem = document.getElementById(`content-cell-overlay-${content.id}`);
 
       contentElem.style.display = 'none';
+    },
+    openContentModal() {
+      this.showContentModal = true;
+
+      const body = document.getElementsByTagName("BODY")[0];
+      body.classList.add('no-scroll');
+    },
+    closeContentModal() {
+      this.showContentModal = false;
+
+      const body = document.getElementsByTagName("BODY")[0];
+      body.classList.remove('no-scroll');
+    },
+    getReadableRuntime(totalMinutes) {
+      if(totalMinutes >= 60) {
+        const hours = (totalMinutes/60).toFixed(0);
+        const minutes = totalMinutes%60;
+
+        return `${hours}h ${minutes}m`;
+      } else {
+        return `${totalMinutes}m`;
+      }
     }
   },
   async created() {    
@@ -236,16 +264,10 @@ export default {
   padding-top: 20px;
 }
 
-.content-rating {
-  border: 1px solid gray;
-}
-
 .genre-seperator {
   font-size: 8px;
-}
-
-.content-detail-spacing {
-  padding-left: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .overlay-icon-spacing {
@@ -273,5 +295,10 @@ export default {
   right: 15px;
   font-size: 50px;
   cursor: pointer;
+}
+
+.genre-list {
+  display: flex;
+  align-items: center;
 }
 </style>

@@ -4,6 +4,10 @@ body {
   overflow-x: hidden;
 }
 
+body.no-scroll {
+  overflow-y: hidden;
+}
+
 .row {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -16,4 +20,12 @@ body {
 
 .col-6 {
   grid-column: span 2;
+}
+
+.content-rating {
+  border: 1px solid gray;
+}
+
+.content-detail-spacing {
+  padding-left: 10px;
 }
